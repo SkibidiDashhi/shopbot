@@ -46,7 +46,7 @@ PRODUCTS = {
     "Blox Fruits Random": {
         "price": 3000, 
         "file": "bloxfruit.txt",
-        "description": "BloxFruit Level 1000+\n • Other On Your Luck!"
+        "description": f"Blox Fruits Random\n\nLv 1000+\nAnime Avater တစ်ခုနှင့်အထက်ပါပါမယ်/nNo Gmail No Phone \n\nPrice - 3000 Ks"
     },
     "Avatar Random": {
         "price": 4000, 
