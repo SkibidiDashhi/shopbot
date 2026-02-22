@@ -44,7 +44,7 @@ PRODUCT_PHOTOS = {
 
 PRODUCTS = {
     "Blox Fruits Random": {
-        "price": 5000, 
+        "price": 3000, 
         "file": "bloxfruit.txt",
         "description": "Random Blox Fruits Account\n• Includes random fruits\n• Level varies\n• Good for starters"
     },
