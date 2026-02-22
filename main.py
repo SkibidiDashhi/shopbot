@@ -1,1 +1,641 @@
+import asyncio
+from aiogram import Bot, Dispatcher, types, F
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
+from aiogram.filters import Command
+from aiogram.enums import ParseMode
+from aiogram.client.default import DefaultBotProperties
+from config import (
+    BOT_TOKEN, ADMIN_ID, ADMIN_GROUP_ID,
+    B_1, LOGO, Warning, NO, FLASH, SURE, LOVE,
+    PLUS, TRUE, ROBUX, ROBLOX, BLOX_FRUIT, LOVE_1,
+    Wallet, Kpay, Wave, Slip, No_1, King, Rq, ACCOUNT_PRICE, PRODUCTS,
+    SHOP_PHOTO_URL, PRODUCT_PHOTOS, Ar, Love_2, Ok, Arrow, Shield, onehundred, Money
+)
+import database
 
+bot = Bot(
+    token=BOT_TOKEN,
+    default=DefaultBotProperties(parse_mode=ParseMode.HTML)
+)
+dp = Dispatcher()
+
+# ================= STATE TRACKING =================
+topup_states = {}
+ticket_states = {}
+purchase_states = {}
+
+# ================= ACCOUNT FUNCTION =================
+def get_account(filename):
+    try:
+        with open(filename, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+        if not lines:
+            return None
+        account = lines[0].strip()
+        with open(filename, "w", encoding="utf-8") as f:
+            f.writelines(lines[1:])
+        return account
+    except Exception as e:
+        print("Account error:", e)
+        return None
+
+# ================= ADMIN CHECK =================
+def is_admin(user_id: int) -> bool:
+    return user_id == ADMIN_ID
+
+# ================= /start COMMAND =================
+@dp.message(Command("start"))
+async def start_cmd(message: types.Message):
+    database.add_user(message.from_user.id)
+    await message.answer(
+        f"{LOGO} Zuki Storez Bot မှာကြိုဆိုပါတယ်ရှင့်\n\n"
+        f"လိုအပ်တာဝယ်ယူရန် /shop ဆိုပြီးပို့ပေးပါ {Warning}\n\n"
+        f"လက်ကျန်ငွေစစ်ရန် /balance ဆိုပြီးပို့ပေးပါ {Warning}\n\n"
+        f"လက်ကျန်ငွေဖြည့်သွင်းရင် /topup ဆိုပြီးပို့ပေးပါ {Warning}\n\n"
+        f"Error ပါလာပါက Report တင်ရန် /ticket ဆိုပြီးပို့ပေးပါ {Warning}\n\n"
+        f"ကောင်းမွန်သောနေ့လေးပိုင်ဆိုင်ပါစေရှင့် {LOVE_1}"
+    )
+    await bot.send_message(
+        ADMIN_GROUP_ID,
+        f"{B_1} New User Started Bot\n\n"
+        f"Name: {message.from_user.full_name}\n"
+        f"ID: {message.from_user.id}"
+    )
+
+# ================= /balance COMMAND =================
+@dp.message(Command("balance"))
+async def balance_cmd(message: types.Message):
+    balance = database.get_balance(message.from_user.id)
+    await message.answer(f"{Wallet} သင့်ရဲ့လက်ကျန်ငွေ : {balance}")
+
+# ================= /addbalance COMMAND =================
+@dp.message(Command("addbalance"))
+async def add_balance_cmd(message: types.Message):
+    if not is_admin(message.from_user.id):
+        await message.answer(f"{NO} ဒီ command ကို Admin များသုံးလို့ရပါတယ်။")
+        return
+
+    args = message.text.split()
+    if len(args) != 3:
+        await message.answer(
+            f"{Warning} နည်းလမ်းမှားယွင်းနေပါသည်။\n\n"
+            f"အသုံးပြုပုံ: /addbalance [user_id] [ငွေပမာဏ]\n"
+            f"ဥပမာ: /addbalance 123456789 10000"
+        )
+        return
+
+    try:
+        user_id = int(args[1])
+        amount = int(args[2])
+
+        if amount <= 0:
+            await message.answer(f"{NO} ငွေပမာဏ မှန်ကန်စွာထည့်ပါ။")
+            return
+
+        database.add_balance(user_id, amount)
+        new_balance = database.get_balance(user_id)
+
+        await message.answer(
+            f"{TRUE} လက်ကျန်ငွေထည့်သွင်းပြီးပါပြီ။\n\n"
+            f"User ID: {user_id}\n"
+            f"ထည့်သွင်းငွေ: {amount}\n"
+            f"လက်ကျန်ငွေ: {new_balance}"
+        )
+
+        try:
+            await bot.send_message(
+                user_id,
+                f"{PLUS} သင့်အကောင့်သို့ ငွေထည့်သွင်းပေးထားပါသည်။\n\n"
+                f"ထည့်သွင်းငွေ: {amount}\n"
+                f"လက်ကျန်ငွေ: {new_balance}\n\n"
+                f"ဝယ်ယူရန်: /shop"
+            )
+        except:
+            await message.answer(f"⚠️ User {user_id} ကို message ပို့မရပါ။")
+
+    except ValueError:
+        await message.answer(f"{NO} User ID နှင့် ငွေပမာဏသည် နံပါတ်ဖြစ်ရပါမည်။")
+    except Exception as e:
+        await message.answer(f"❌ အမှားအယွင်းရှိနေပါသည်: {str(e)}")
+
+# ================= /ticket COMMAND =================
+@dp.message(Command("ticket"))
+async def ticket_cmd(message: types.Message):
+    ticket_states[message.from_user.id] = {'step': 1}
+    await message.answer(
+        f"{Rq} ကျေးဇူးပြု၍ သင်တွေ့ကြုံရသော Error သို့မဟုတ် အဆင်မပြေမှုကို ရှင်းလင်းစွာရေးသားပို့ပေးပါ။\n\n"
+        f"ဥပမာ - ကျွန်တော် ငွေဖြည့်လိုက်ပေမယ့် လက်ကျန်မတိုးလာပါ။"
+    )
+
+@dp.message(lambda m: m.from_user.id in ticket_states and ticket_states[m.from_user.id]['step'] == 1)
+async def handle_ticket_message(message: types.Message):
+    user_id = message.from_user.id
+    ticket_text = message.text
+
+    ticket_states[user_id]['message'] = ticket_text
+    ticket_states[user_id]['step'] = 2
+
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="📸 Yes, send screenshot", callback_data="ticket_photo_yes"),
+                InlineKeyboardButton(text="❌ No, just send", callback_data="ticket_photo_no")
+            ]
+        ]
+    )
+
+    await message.answer(
+        f"သင့်တွင် Screenshot ရှိပါသလား?\n"
+        f"(ရှိပါက ပို့ပေးခြင်းဖြင့် ပြဿနာဖြေရှင်းရန် ပိုမိုလွယ်ကူစေပါသည်)",
+        reply_markup=keyboard
+    )
+
+@dp.callback_query(lambda c: c.data.startswith("ticket_photo_"))
+async def ticket_photo_choice(callback: CallbackQuery):
+    user_id = callback.from_user.id
+    state = ticket_states.get(user_id)
+
+    if not state:
+        await callback.answer("Session expired. Please use /ticket again.")
+        return
+
+    choice = callback.data.split("_")[2]
+
+    if choice == "yes":
+        ticket_states[user_id]['step'] = 3
+        await callback.message.edit_text("📸 ကျေးဇူးပြု၍ Screenshot ကိုပို့ပေးပါ။")
+    else:
+        await send_ticket_to_admin(callback.message, user_id, state['message'], None)
+        await callback.message.edit_text(f"{SURE} သင့် Report ကို Admin Team ထံပို့ပြီးပါပြီ။ မကြာမီ ပြန်လည်ဖြေကြားပါမည်။")
+        del ticket_states[user_id]
+
+    await callback.answer()
+
+@dp.message(lambda m: m.from_user.id in ticket_states and ticket_states[m.from_user.id].get('step') == 3 and m.photo)
+async def handle_ticket_photo(message: types.Message):
+    user_id = message.from_user.id
+    state = ticket_states.get(user_id)
+
+    if not state:
+        return
+
+    photo_id = message.photo[-1].file_id
+    await send_ticket_to_admin(message, user_id, state['message'], photo_id)
+    await message.answer(f"{SURE} သင့် Report ကို Admin Team ထံပို့ပြီးပါပြီ။ မကြာမီ ပြန်လည်ဖြေကြားပါမည်။")
+    del ticket_states[user_id]
+
+async def send_ticket_to_admin(message: types.Message, user_id: int, ticket_text: str, photo_id: str = None):
+    caption = (
+        f"{Rq} NEW TICKET REPORT\n\n"
+        f"👤 User: {message.from_user.full_name}\n"
+        f"🆔 ID: {user_id}\n"
+        f"📝 Username: @{message.from_user.username or 'None'}\n"
+        f"💬 Message: {ticket_text}\n"
+        f"📅 Date: {message.date}\n\n"
+        f"Use /reply_{user_id} to respond to this user"
+    )
+
+    try:
+        if photo_id:
+            await bot.send_photo(
+                ADMIN_GROUP_ID,
+                photo=photo_id,
+                caption=caption
+            )
+        else:
+            await bot.send_message(
+                ADMIN_GROUP_ID,
+                caption
+            )
+        print(f"✅ Ticket sent from user {user_id} to admin group")
+    except Exception as e:
+        print(f"❌ Error sending ticket to admin group: {e}")
+        await message.answer("❌ Admin ထံပို့ရာတွင် အဆင်မပြေမှုရှိပါသည်။ ခဏနေမှထပ်ကြိုးစားပါ။")
+
+@dp.message(lambda m: m.from_user.id == ADMIN_ID and m.text and m.text.startswith('/reply_'))
+async def admin_reply(message: types.Message):
+    try:
+        parts = message.text.split(' ', 2)
+        command = parts[0]
+        reply_text = parts[1] if len(parts) > 1 else ""
+
+        user_id = int(command.replace('/reply_', ''))
+
+        if not reply_text:
+            await message.answer("ပြန်ကြားလိုသည့် စာသားကိုရေးပေးပါ။\nဥပမာ: /reply_123456789 ကျေးဇူးတင်ပါတယ်။")
+            return
+
+        await bot.send_message(
+            user_id,
+            f"👑 Admin Team မှ ပြန်ကြားချက်:\n\n{reply_text}"
+        )
+
+        await message.answer(f"✅ User {user_id} ကို ပြန်ကြားပြီးပါပြီ။")
+
+    except ValueError:
+        await message.answer("❌ User ID မှားယွင်းနေပါသည်။")
+    except Exception as e:
+        await message.answer(f"❌ ပြန်ကြားရာတွင် အဆင်မပြေမှုရှိပါသည်: {str(e)}")
+
+# ================= /topup COMMAND =================
+@dp.message(Command("topup"))
+async def topup_cmd(message: types.Message):
+    topup_states[message.from_user.id] = {'step': 1}
+    await message.answer(
+        f"{Kpay} 09420136212 [ KBZ Pay ]\n"
+        f"{Wave} 09951734587 [ Wave Pay ]\n\n"
+        f"{King} နာမည် - Zar Chi Win\n\n"
+        f"{No_1} Note ကိုစနောက်တာထည့်လာလျှင် ဖြည့်ပေးမည်မဟုတ်ပါ {No_1}\n\n"
+        f"{Slip} ငွေလွှဲပြီးပါက Slip Screenshot ကိုပို့ပေးမှသာထည့်ပေးလို့ရပါမည်။"
+    )
+    await message.answer(f"{Wallet} ငွေထည့်မည့် ပမာဏပို့ပေးပါ။")
+
+@dp.message(lambda m: m.from_user.id in topup_states and topup_states[m.from_user.id]['step'] == 1 and not m.photo)
+async def handle_topup_amount(message: types.Message):
+    user_id = message.from_user.id
+    state = topup_states[user_id]
+
+    try:
+        amount = int(message.text.strip())
+        if amount <= 0:
+            await message.answer(f"{NO} ငွေပမာဏ သက်ဆိုင်ရာဖြည့်ပါ")
+            return
+        state['amount'] = amount
+        state['step'] = 2
+        await message.answer(f"{Slip} ငွေလွှဲ Screenshot ပို့ပေးပါ")
+    except ValueError:
+        await message.answer(f"{NO} ငွေပမာဏ အမှန်တကယ် စာရိုက်ပေးပါ")
+
+@dp.message(lambda m: m.from_user.id in topup_states and m.photo)
+async def handle_topup_photo(message: types.Message):
+    user_id = message.from_user.id
+    state = topup_states.get(user_id)
+
+    if not state or state.get('step') != 2:
+        await message.answer("Please enter the amount first using /topup command")
+        return
+
+    photo = message.photo[-1]
+    photo_id = photo.file_id
+    amount = state.get('amount', 'Unknown')
+
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="✅ Approve", callback_data=f"approve_{user_id}"),
+                InlineKeyboardButton(text="❌ Reject", callback_data=f"reject_{user_id}")
+            ]
+        ]
+    )
+
+    caption = (
+        f"{PLUS} New Topup Request\n\n"
+        f"👤 Name: {message.from_user.full_name}\n"
+        f"🆔 ID: {user_id}\n"
+        f"💰 Amount: {amount} MMK\n"
+        f"📝 Username: @{message.from_user.username or 'None'}"
+    )
+
+    try:
+        await bot.send_photo(
+            ADMIN_GROUP_ID,
+            photo=photo_id,
+            caption=caption,
+            reply_markup=keyboard
+        )
+
+        state['photo_id'] = photo_id
+        state['step'] = 3
+
+        await message.answer(
+            f"{SURE} သင့်ရဲ့ Request ကို Admin များထံပို့ပြီးပါပြီ။\n"
+            f"ခဏစောင့်ပေးပါ။ {Rq}"
+        )
+
+    except Exception as e:
+        print(f"❌ Error sending to admin group: {e}")
+        await message.answer("❌ နည်းပညာအခက်အခဲရှိနေပါသည်။ ခဏနေမှထပ်ကြိုးစားပါ။")
+        if user_id in topup_states:
+            del topup_states[user_id]
+
+@dp.callback_query(lambda c: c.data.startswith("approve_"))
+async def approve_topup(callback: CallbackQuery):
+    try:
+        user_id = int(callback.data.split("_")[1])
+        state = topup_states.get(user_id)
+
+        if not state:
+            await callback.answer("❌ Request expired or already processed", show_alert=True)
+            await callback.message.edit_caption(
+                callback.message.caption + "\n\n❌ This request has expired"
+            )
+            return
+
+        amount = state.get('amount', 0)
+
+        database.add_balance(user_id, amount)
+
+        await callback.message.edit_caption(
+            f"✅ APPROVED\n\n"
+            f"User ID: {user_id}\n"
+            f"Amount: {amount} MMK\n"
+            f"Approved by: {callback.from_user.full_name}"
+        )
+
+        await bot.send_message(
+            user_id,
+            f"{TRUE} Topup အောင်မြင်ပါသည်\n\n"
+            f"💰 ငွေပမာဏ: {amount} MMK\n"
+            f"✅ သင့်အကောင့်သို့ထည့်သွင်းပြီးပါပြီ။\n\n"
+            f"လက်ကျန်စစ်ရန်: /balance"
+        )
+
+        del topup_states[user_id]
+        await callback.answer("✅ Approved successfully")
+
+    except Exception as e:
+        print(f"Error in approve: {e}")
+        await callback.answer("❌ Error processing approval", show_alert=True)
+
+@dp.callback_query(lambda c: c.data.startswith("reject_"))
+async def reject_topup(callback: CallbackQuery):
+    try:
+        user_id = int(callback.data.split("_")[1])
+        state = topup_states.get(user_id)
+
+        if not state:
+            await callback.answer("❌ Request expired or already processed", show_alert=True)
+            await callback.message.edit_caption(
+                callback.message.caption + "\n\n❌ This request has expired"
+            )
+            return
+
+        amount = state.get('amount', 'Unknown')
+
+        await callback.message.edit_caption(
+            f"❌ REJECTED\n\n"
+            f"User ID: {user_id}\n"
+            f"Amount: {amount} MMK\n"
+            f"Rejected by: {callback.from_user.full_name}"
+        )
+
+        await bot.send_message(
+            user_id,
+            f"{NO} Topup မအောင်မြင်ပါ\n\n"
+            f"ငွေလွှဲပြေစာကို ပြန်လည်စစ်ဆေးပြီးမှသာ ထည့်သွင်းပေးပါမည်။\n"
+            f"ထပ်မံကြိုးစားရန်: /topup"
+        )
+
+        del topup_states[user_id]
+        await callback.answer("✅ Rejected")
+
+    except Exception as e:
+        print(f"Error in reject: {e}")
+        await callback.answer("❌ Error processing rejection", show_alert=True)
+
+# ================= /shop COMMAND WITH PHOTO =================
+@dp.message(Command("shop"))
+async def shop_cmd(message: types.Message):
+    try:
+        if not PRODUCTS:
+            await message.answer("❌ Products not available at the moment.")
+            return
+
+        keyboard = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [
+                    InlineKeyboardButton(text="🎮 Blox Fruits Random", callback_data="view_blox"),
+                    InlineKeyboardButton(text="👤 Avatar Random", callback_data="view_avatar")
+                ],
+                [
+                    InlineKeyboardButton(text="💰 Robux Random", callback_data="view_robux"),
+                    InlineKeyboardButton(text="🌐 Boost Website", callback_data="view_boost")
+                ]
+            ]
+        )
+
+        await bot.send_photo(
+            chat_id=message.chat.id,
+            photo=SHOP_PHOTO_URL,
+            caption=f"{LOGO} မိမိဝယ်ချင်သည့် ပစ္စည်းကိုနှိပ်ပေးပါရန်။",
+            reply_markup=keyboard
+        )
+
+    except Exception as e:
+        print(f"Error in shop command: {e}")
+        await message.answer("❌ Shop menu temporarily unavailable. Please try again later.")
+
+# ================= VIEW PRODUCT DETAILS =================
+@dp.callback_query(lambda c: c.data.startswith("view_"))
+async def view_product(callback: CallbackQuery):
+    try:
+        product_key = callback.data.replace("view_", "")
+
+        product_map = {
+            "blox": "Blox Fruits Random",
+            "avatar": "Avatar Random",
+            "robux": "Robux Random",
+            "boost": "Boost Website"
+        }
+
+        product_name = product_map.get(product_key)
+        if not product_name:
+            await callback.answer("Product not found")
+            return
+
+        if product_name == "Boost Website":
+            await callback.answer()
+            return
+
+        product = PRODUCTS.get(product_name)
+        if not product:
+            await callback.answer("Product details not found")
+            return
+
+        product_photo = PRODUCT_PHOTOS.get(product_name, SHOP_PHOTO_URL)
+
+        keyboard = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [
+                    InlineKeyboardButton(text="၀ယ်ယူမည်", callback_data=f"confirm_{product_key}"),
+                    InlineKeyboardButton(text="မ၀ယ်ယူတော့ပါ", callback_data="back_to_shop")
+                ]
+            ]
+        )
+
+        await callback.message.delete()
+
+        await bot.send_photo(
+            chat_id=callback.message.chat.id,
+            photo=product_photo,
+            caption=(
+                f"{Ar} {product_name}\n\n"
+                f"{Money} Price: {product['price']} MMK\n\n"
+                f"{Love_2} {product['description']}\n"
+                f"သေချာဝယ်ယူလိုပါသလား?"
+            ),
+            reply_markup=keyboard
+        )
+
+        await callback.answer()
+
+    except Exception as e:
+        print(f"Error in view_product: {e}")
+        await callback.answer("❌ Error loading product details")
+
+# ================= BACK TO SHOP =================
+@dp.callback_query(lambda c: c.data == "back_to_shop")
+async def back_to_shop(callback: CallbackQuery):
+    try:
+        keyboard = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [
+                    InlineKeyboardButton(text="🎮 Blox Fruits Random", callback_data="view_blox"),
+                    InlineKeyboardButton(text="👤 Avatar Random", callback_data="view_avatar")
+                ],
+                [
+                    InlineKeyboardButton(text="💰 Robux Random", callback_data="view_robux"),
+                    InlineKeyboardButton(text="🌐 Boost Website", callback_data="view_boost")
+                ]
+            ]
+        )
+
+        await callback.message.delete()
+
+        await bot.send_photo(
+            chat_id=callback.message.chat.id,
+            photo=SHOP_PHOTO_URL,
+            caption=f"{LOGO} မိမိဝယ်ချင်သည့် ပစ္စည်းကိုနှိပ်ပေးပါရန်။",
+            reply_markup=keyboard
+        )
+
+        await callback.answer()
+
+    except Exception as e:
+        print(f"Error in back_to_shop: {e}")
+        await callback.answer("❌ Error returning to shop")
+
+# ================= CONFIRM PURCHASE =================
+@dp.callback_query(lambda c: c.data.startswith("confirm_"))
+async def confirm_purchase(callback: CallbackQuery):
+    try:
+        product_key = callback.data.replace("confirm_", "")
+
+        product_map = {
+            "blox": "Blox Fruits Random",
+            "avatar": "Avatar Random",
+            "robux": "Robux Random"
+        }
+
+        product_name = product_map.get(product_key)
+        if not product_name:
+            await callback.answer("Product not found")
+            return
+
+        user_id = callback.from_user.id
+        price = PRODUCTS[product_name]["price"]
+        filename = PRODUCTS[product_name]["file"]
+
+        purchase_states[user_id] = {
+            'product': product_name,
+            'price': price,
+            'filename': filename
+        }
+
+        balance = database.get_balance(user_id)
+        if balance < price:
+            await callback.message.delete()
+            await bot.send_message(
+                callback.message.chat.id,
+                f"{NO} Balance မလုံလောက်ပါ\n\n"
+                f"Your Balance: {balance} MMK\n"
+                f"Need: {price} MMK\n\n"
+                f"ငွေဖြည့်ရန်: /topup"
+            )
+            await callback.answer()
+            return
+
+        await process_purchase(callback, user_id, product_name, price, filename)
+
+    except Exception as e:
+        print(f"Error in confirm_purchase: {e}")
+        await callback.answer("❌ Error processing purchase")
+
+# ================= PROCESS PURCHASE =================
+async def process_purchase(callback: CallbackQuery, user_id: int, product_name: str, price: int, filename: str):
+    try:
+        if not database.deduct_balance(user_id, price):
+            await callback.message.delete()
+            await bot.send_message(
+                callback.message.chat.id,
+                f"{NO} Balance deduction failed. Please try again."
+            )
+            await callback.answer()
+            return
+
+        account = get_account(filename)
+        if not account:
+            database.add_balance(user_id, price)
+            await callback.message.delete()
+            await bot.send_message(
+                callback.message.chat.id,
+                "❌ Product out of stock. Your balance has been refunded.\n\n"
+                "ပစ္စည်းပြီးသွားပါသည်။ ကျေးဇူးပြု၍ ခဏစောင့်ပါ။"
+            )
+            await callback.answer()
+            return
+
+        await callback.message.delete()
+
+        await bot.send_message(
+            user_id,
+            f"{TRUE} {product_name} ဝယ်ယူမှုအောင်မြင်ပါသည်\n\n"
+            f"📦 Account Details:\n{account}\n\n"
+            f"ဝယ်ယူမှုအတွက်ကျေးဇူးတင်ပါသည်။"
+        )
+
+        await bot.send_message(
+            ADMIN_GROUP_ID,
+            f"🛒 New Purchase\n\n"
+            f"User: {callback.from_user.full_name}\n"
+            f"ID: {user_id}\n"
+            f"Product: {product_name}\n"
+            f"Price: {price} MMK"
+        )
+
+        if user_id in purchase_states:
+            del purchase_states[user_id]
+
+        await callback.answer("✅ Purchase successful!")
+
+    except Exception as e:
+        print(f"Error in process_purchase: {e}")
+        await callback.message.delete()
+        await bot.send_message(
+            callback.message.chat.id,
+            "❌ An error occurred during purchase. Please try again."
+        )
+        await callback.answer()
+
+# ================= ERROR HANDLER =================
+@dp.errors()
+async def errors_handler(event: types.ErrorEvent):
+    print(f"Bot error: {event.exception}")
+    try:
+        if event.update.message:
+            await event.update.message.answer("❌ An error occurred. Please try again later.")
+    except:
+        pass
+
+# ================= START BOT =================
+async def main():
+    print("✅ Bot Started Successfully")
+    print(f"Admin ID: {ADMIN_ID}")
+    print(f"Admin Group ID: {ADMIN_GROUP_ID}")
+    print(f"Shop Photo URL: {SHOP_PHOTO_URL}")
+    print(f"Products available: {list(PRODUCTS.keys())}")
+    print(f"Waiting for messages...")
+    await dp.start_polling(bot)
+
+if __name__ == "__main__":
+    asyncio.run(main())
