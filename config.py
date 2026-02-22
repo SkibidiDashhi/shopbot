@@ -1,5 +1,5 @@
 BOT_TOKEN = "7720376472:AAH3t7Lp745Hy6EOsFssF_QcMFj26BT2seE"
-ADMIN_ID = 5496411145
+ADMIN_ID = 5496411145, 5051767549
 B_1 = '<tg-emoji emoji-id="5794268498460939598">✅</tg-emoji>'
 LOGO = '<tg-emoji emoji-id="6248762989990647224">🤩</tg-emoji>'
 Warning = '<tg-emoji emoji-id="5440660757194744323">‼️</tg-emoji>'
