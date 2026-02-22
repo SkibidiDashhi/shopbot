@@ -36,8 +36,8 @@ SHOP_PHOTO_URL = "https://image2url.com/r2/default/images/1771762740407-fe504b86
 
 # Product photos (replace with your actual photo links)
 PRODUCT_PHOTOS = {
-    "Blox Fruits Random": "https://image2url.com/r2/default/images/1771762984974-2214cdf9-6039-4884-ae2c-e6ffa56b668c.jpg",  # Replace with Blox Fruit photo
-    "Avatar Random": "https://image2url.com/r2/default/images/1771767590880-d59fd197-4f42-474b-b5b3-bb2a72cdda20.jpg",         # Replace with Avatar photo
+    "Blox Fruits Random": "https://image2url.com/r2/default/images/1771767590880-d59fd197-4f42-474b-b5b3-bb2a72cdda20.jpg",  # Replace with Blox Fruit photo
+    "Avatar Random": "https://image2url.com/r2/default/images/1771775458021-e3ee0257-798e-48b4-9018-02977923f1c9.jpg",         # Replace with Avatar photo
     "Robux Random": "https://telegra.ph/file/your-robux-photo.jpg",           # Replace with Robux photo
     "Boost Website": "https://image2url.com/r2/default/images/1771767674903-1318037b-16bc-41ba-9ab9-51eae3a22735.jpg"           # Replace with Boost website photo
 }
@@ -46,7 +46,7 @@ PRODUCTS = {
     "Blox Fruits Random": {
         "price": 3000, 
         "file": "bloxfruit.txt",
-        "description": f"Blox Fruits Random\n\nLv 1000+\nAnime Avater တစ်ခုနှင့်အထက်ပါပါမယ်/nNo Gmail No Phone \n\nPrice - 3000 Ks"
+        "description": f"Blox Fruits Random\n\nLv 1000+\nAnime Avater တစ်ခုနှင့်အထက်ပါပါမယ်\nNo Gmail No Phone \n\nPrice - 3000 Ks"
     },
     "Avatar Random": {
         "price": 4000, 
