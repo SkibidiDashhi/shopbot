@@ -46,7 +46,7 @@ PRODUCTS = {
     "Blox Fruits Random": {
         "price": 3000, 
         "file": "bloxfruit.txt",
-        "description": "Random Blox Fruits Account\n• Includes random fruits\n• Level varies\n• Good for starters"
+        "description": "BloxFruit Level 1000+\n • Other On Your Luck!"
     },
     "Avatar Random": {
         "price": 4000, 
