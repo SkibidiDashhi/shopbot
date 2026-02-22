@@ -579,8 +579,7 @@ async def process_purchase(callback: CallbackQuery, user_id: int, product_name: 
             await callback.message.delete()
             await bot.send_message(
                 callback.message.chat.id,
-                "❌ Product out of stock. Your balance has been refunded.\n\n"
-                "ပစ္စည်းပြီးသွားပါသည်။ ကျေးဇူးပြု၍ ခဏစောင့်ပါ။"
+                "Stock ပြတ်နေပါသ၍ ခနစောင့်ပေးပါရန်။ ငွေပြန်အမ်းထားပါသည်။"
             )
             await callback.answer()
             return
