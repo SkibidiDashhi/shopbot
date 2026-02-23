@@ -236,7 +236,7 @@ async def admin_reply(message: types.Message):
         # Send reply to user
         await bot.send_message(
             user_id,
-            f"👑 Admin Team မှ ပြန်ကြားချက်:\n\n{reply_text}"
+            f"{True} Admin Team မှ ပြန်ကြားချက်:\n\n{reply_text}"
         )
         
         await message.answer(f"✅ User {user_id} ကို ပြန်ကြားပြီးပါပြီ။")
