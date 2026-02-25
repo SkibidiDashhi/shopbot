@@ -236,7 +236,7 @@ async def admin_reply(message: types.Message):
         # Send reply to user
         await bot.send_message(
             user_id,
-            f"{True} Admin Team မှ ပြန်ကြားချက်:\n\n{reply_text}"
+            f"✅ Admin Team မှ ပြန်ကြားချက်:\n\n{reply_text}"
         )
         
         await message.answer(f"✅ User {user_id} ကို ပြန်ကြားပြီးပါပြီ။")
@@ -454,7 +454,7 @@ async def view_product(callback: CallbackQuery):
             
         if product_name == "Boost Website":
             # Get the URL from PRODUCTS
-            boost_url = PRODUCTS.get("Boost Website", {}).get("url", "https://example.com")
+            boost_url = PRODUCTS.get("Boost Website", {}).get("url", "www.zukiservices.com")
             await callback.answer()
             # Open the URL
             return
