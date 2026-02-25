@@ -124,7 +124,7 @@ async def ticket_cmd(message: types.Message):
     ticket_states[message.from_user.id] = {'step': 1}
     await message.answer(
         f"{Rq} ကျေးဇူးပြု၍ သင်တွေ့ကြုံရသော Error သို့မဟုတ် အဆင်မပြေမှုကို ရှင်းလင်းစွာရေးသားပို့ပေးပါ။\n\n"
-        f"ဥပမာ - ကျွန်တော် ငွေဖြည့်လိုက်ပေမယ့် လက်ကျန်မတိုးလာပါ။"
+        f"ဥပမာ - ကျွန်တော် ငွေဖြည့်လိုက်ပေမယ့် လက်ကျန်ငွေမတိုးလာပါ။"
     )
 
 @dp.message(lambda m: m.from_user.id in ticket_states and ticket_states[m.from_user.id]['step'] == 1)
@@ -469,8 +469,8 @@ async def view_product(callback: CallbackQuery):
         keyboard = InlineKeyboardMarkup(
             inline_keyboard=[
                 [
-                    InlineKeyboardButton(text="✅ Yes, Buy Now", callback_data=f"confirm_{product_key}"),
-                    InlineKeyboardButton(text="❌ No, Go Back", callback_data="back_to_shop")
+                    InlineKeyboardButton(text="✅ ၀ယ်ယူမည်", callback_data=f"confirm_{product_key}"),
+                    InlineKeyboardButton(text="❌ မ၀ယ်ယူတော့ပါ", callback_data="back_to_shop")
                 ]
             ]
         )
