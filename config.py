@@ -52,15 +52,4 @@ PRODUCTS = {
         "price": 4000, 
         "file": "avatar.txt",
         "description": f"ပုံထဲမှာပြထားတဲ့ Anime ထဲကအတိုင်း MC or လူကြိုက်များတဲ့ Character တစ်ကောင်ကို Full Avater ပါပြီးသား တစ်ကောင်အနည်းဆုံးပါဝင်ပါမယ် {Ok}\n\nAvatar တွေကလည်း Low Q ပေါတောတောတွေမဟုတ်တဲ့အပြင် Robux အပိုတွေလည်း 100% ပါပါမယ် {B_1}\n\nဒီအကောင့်တွေထဲကို Robux ထည့်မယ်ဆိုရင်လည်းတန်းဝယ်တန်းရပါမယ်ရှင့်{Love_2}\n\nပုံမှပြထားတဲ့ Character ပဲပါမှာမဟုတ်ပါဘူး အဲ့ Anime ထဲကလူကြိုက်များတဲ့တခြား Character တွေလည်းပါပါတယ်"
-    },
-    "Robux Random": {
-        "price": 4000, 
-        "file": "robux.txt",
-        "description": "Robux 100-200 {Arrow} {onehundred}\n\n{Shield} No Gmail / No Phone\n}nRobux ထပ်တိုးဝယ်ချင်ပါက @mrzukie ‌လာဝယ်ယူနိုင်ပါသည် ( Robux ရရင်ထပ်စောင့်စရာမလိုတန်းဝယ်တန်းရ )\n\n{Arrow} Price - 4000 Ks"
-    },
-    "Boost Website": {
-        "price": 0, 
-        "url": "https://www.zukiservices.com",
-        "description": "🌐 Website Boost Service\n• Click to visit"
     }
-}
