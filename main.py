@@ -7,7 +7,7 @@ from aiogram.client.default import DefaultBotProperties
 from config import (
     BOT_TOKEN, ADMIN_IDS, ADMIN_GROUP_ID,
     B_1, LOGO, Warning, NO, FLASH, SURE, LOVE,
-    PLUS, TRUE, ROBUX, ROBLOX, BLOX_FRUIT, LOVE_1, LOVE_2,
+    PLUS, TRUE, ROBUX, ROBLOX, BLOX_FRUIT, LOVE_1, Love_2,
     Wallet, Kpay, Wave, Slip, No_1, King, Rq, 
     Ok, Arrow, Shield, onehundred, Money, PRODUCTS,
     SHOP_PHOTO_URL, PRODUCT_PHOTOS
