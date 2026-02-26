@@ -35,8 +35,8 @@ SHOP_PHOTO_URL = "https://image2url.com/r2/default/images/1771762740407-fe504b86
 
 # Product photos
 PRODUCT_PHOTOS = {
-    "Blox Fruits Random": "https://image2url.com/r2/default/images/1771775458021-e3ee0257-798e-48b4-9018-02977923f1c9.jpg",
-    "Avatar Random": "https://image2url.com/r2/default/images/1771767590880-d59fd197-4f42-474b-b5b3-bb2a72cdda20.jpg"
+    "Blox Fruits Random": "https://image2url.com/r2/default/images/1771767590880-d59fd197-4f42-474b-b5b3-bb2a72cdda20.jpg",
+    "Avatar Random": "https://image2url.com/r2/default/images/1771775458021-e3ee0257-798e-48b4-9018-02977923f1c9.jpg"
 }
 
 PRODUCTS = {
@@ -48,6 +48,6 @@ PRODUCTS = {
     "Avatar Random": {
         "price": 4000, 
         "file": "avatar.txt",
-        "description": "ပုံထဲမှာပြထားတဲ့ Anime ထဲကအတိုင်း MC or လူကြိုက်များတဲ့ Character တစ်ကောင်ကို Full Avater ပါပြီးသား တစ်ကောင်အနည်းဆုံးပါဝင်ပါမယ် {Ok}\n\nAvatar တွေကလည်း Low Q ပေါတောတောတွေမဟုတ်တဲ့အပြင် Robux အပိုတွေလည်း 100% ပါပါမယ် {B_1}\n\nဒီအကောင့်တွေထဲကို Robux ထည့်မယ်ဆိုရင်လည်းတန်းဝယ်တန်းရပါမယ်ရှင့်{Love_2}\n\nပုံမှပြထားတဲ့ Character ပဲပါမှာမဟုတ်ပါဘူး အဲ့ Anime ထဲကလူကြိုက်များတဲ့တခြား Character တွေလည်းပါပါတယ်"
+        "description": f"ပုံထဲမှာပြထားတဲ့ Anime ထဲကအတိုင်း MC or လူကြိုက်များတဲ့ Character တစ်ကောင်ကို Full Avater ပါပြီးသား တစ်ကောင်အနည်းဆုံးပါဝင်ပါမယ် {Ok}\n\nAvatar တွေကလည်း Low Q ပေါတောတောတွေမဟုတ်တဲ့အပြင် Robux အပိုတွေလည်း 100% ပါပါမယ် {B_1}\n\nဒီအကောင့်တွေထဲကို Robux ထည့်မယ်ဆိုရင်လည်းတန်းဝယ်တန်းရပါမယ်ရှင့်{Love_2}\n\nပုံမှပြထားတဲ့ Character ပဲပါမှာမဟုတ်ပါဘူး အဲ့ Anime ထဲကလူကြိုက်များတဲ့တခြား Character တွေလည်းပါပါတယ်"
     }
 }
