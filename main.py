@@ -602,8 +602,8 @@ async def view_product(callback: CallbackQuery):
         keyboard = InlineKeyboardMarkup(
             inline_keyboard=[
                 [
-                    InlineKeyboardButton(text="✅ Yes, Buy Now", callback_data=f"confirm_{product_key}"),
-                    InlineKeyboardButton(text="❌ No, Go Back", callback_data="back_to_shop")
+                    InlineKeyboardButton(text="✅ ၀ယ်ယူမည်", callback_data=f"confirm_{product_key}"),
+                    InlineKeyboardButton(text="❌ နောက်ပြန်သွားမည်", callback_data="back_to_shop")
                 ]
             ]
         )
@@ -660,8 +660,8 @@ async def handle_robux_amount(message: types.Message):
         keyboard = InlineKeyboardMarkup(
             inline_keyboard=[
                 [
-                    InlineKeyboardButton(text="✅ Buy for Sure", callback_data="robux_confirm"),
-                    InlineKeyboardButton(text="❌ Not going to buy", callback_data="robux_cancel")
+                    InlineKeyboardButton(text="✅ ၀ယ်ယူမည်", callback_data="robux_confirm"),
+                    InlineKeyboardButton(text="❌ မ၀ယ်ယူတော့ပါ", callback_data="robux_cancel")
                 ]
             ]
         )
@@ -764,8 +764,8 @@ async def robux_order_complete(callback: CallbackQuery):
     # Notify user
     await bot.send_message(
         user_id,
-        f"{TRUE} သင့် Robux မှာယူမှု ပြီးဆုံးပါပြီ။\n"
-        f"ကျေးဇူးတင်ပါသည် {LOVE_1}"
+        f"{TRUE} Account ကို robux ထည့်ပေးပြီးပါပြီဗျ\n"
+        f"၀ယ်ယူမှုအတွက်အထူးကျေးဇူးတင်ပါတယ်ခဗျ။ {LOVE_1}"
     )
     
     await callback.answer("✅ Order marked as complete")
@@ -788,8 +788,8 @@ async def robux_order_failed(callback: CallbackQuery):
     # This is a placeholder - you'll need to implement refund logic
     await bot.send_message(
         user_id,
-        f"{NO} သင့် Robux မှာယူမှု မအောင်မြင်ပါ။\n"
-        f"ငွေပြန်အမ်းပေးပါမည်။ ကျေးဇူးပြု၍ Admin ကိုဆက်သွယ်ပါ။"
+        f"{NO} ပေးထားသော username သည် group join တာ 15 ရက်မပြည့်သေးသောကြောင့်ထည့်ပေး၍မရနိုင်ပါ။\n"
+        f"ငွေပြန်အမ်းပေးထားပါတယ်ခဗျ။"
     )
     
     await callback.answer("❌ Order marked as failed")
