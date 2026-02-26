@@ -9,7 +9,7 @@ from config import (
     B_1, LOGO, Warning, NO, FLASH, SURE, LOVE,
     PLUS, TRUE, ROBUX, ROBLOX, BLOX_FRUIT, LOVE_1,
     Wallet, Kpay, Wave, Slip, No_1, King, Rq, PRODUCTS,
-    SHOP_PHOTO_URL, PRODUCT_PHOTOS, Ar, Love_2, Ok, Arrow, Shield, onehundred, Money
+    SHOP_PHOTO_URL, PRODUCT_PHOTOS, Love_2, Ok, Arrow, Shield, onehundred, Money
 )
 import database
 
