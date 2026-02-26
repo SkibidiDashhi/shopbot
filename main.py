@@ -7,9 +7,10 @@ from aiogram.client.default import DefaultBotProperties
 from config import (
     BOT_TOKEN, ADMIN_IDS, ADMIN_GROUP_ID,
     B_1, LOGO, Warning, NO, FLASH, SURE, LOVE,
-    PLUS, TRUE, ROBUX, ROBLOX, BLOX_FRUIT, LOVE_1,
-    Wallet, Kpay, Wave, Slip, No_1, King, Rq, PRODUCTS,
-    SHOP_PHOTO_URL, PRODUCT_PHOTOS, Love_2, Ok, Arrow, Shield, onehundred, Money
+    PLUS, TRUE, ROBUX, ROBLOX, BLOX_FRUIT, LOVE_1, LOVE_2,
+    Wallet, Kpay, Wave, Slip, No_1, King, Rq, 
+    Ok, Arrow, Shield, onehundred, Money, PRODUCTS,
+    SHOP_PHOTO_URL, PRODUCT_PHOTOS
 )
 import database
 
@@ -23,7 +24,8 @@ dp = Dispatcher()
 topup_states = {}
 ticket_states = {}
 purchase_states = {}
-robux_states = {}  # user_id -> {'step': 1|2, 'username': str, 'amount': int}
+robux_states = {}  # user_id -> {'step': 1|2, 'username': str, 'amount': int, 'message_id': int}
+broadcast_states = {}  # admin_id -> {'step': 1, 'message': str, 'photo': str}
 
 # ================= ACCOUNT FUNCTION =================
 def get_account(filename):
@@ -43,6 +45,13 @@ def get_account(filename):
 # ================= ADMIN CHECK =================
 def is_admin(user_id: int) -> bool:
     return user_id in ADMIN_IDS
+
+# ================= GET ALL USERS FUNCTION =================
+def get_all_users():
+    """Get all user IDs from database"""
+    database.cursor.execute("SELECT user_id FROM users")
+    users = database.cursor.fetchall()
+    return [user[0] for user in users]
 
 # ================= /start COMMAND =================
 @dp.message(Command("start"))
@@ -68,6 +77,127 @@ async def start_cmd(message: types.Message):
 async def balance_cmd(message: types.Message):
     balance = database.get_balance(message.from_user.id)
     await message.answer(f"{Wallet} သင့်ရဲ့လက်ကျန်ငွေ : {balance}")
+
+# ================= /broadcast COMMAND (Admin Only) =================
+@dp.message(Command("broadcast"))
+async def broadcast_cmd(message: types.Message):
+    if not is_admin(message.from_user.id):
+        await message.answer(f"{NO} ဒီ command ကို Admin များသုံးလို့ရပါတယ်။")
+        return
+    
+    broadcast_states[message.from_user.id] = {'step': 1}
+    await message.answer(
+        f"{Rq} ကျေးဇူးပြု၍ ပို့လိုသော Message ကိုရိုက်ထည့်ပါ။\n\n"
+        f"မှတ်ချက်: ပုံပါလိုပါက စာသားနှင့်အတူ ပုံကိုပါ တစ်ခါတည်းပို့ပေးနိုင်ပါသည်။"
+    )
+
+@dp.message(lambda m: m.from_user.id in broadcast_states and broadcast_states[m.from_user.id]['step'] == 1)
+async def handle_broadcast_message(message: types.Message):
+    admin_id = message.from_user.id
+    
+    # Check if message has photo
+    if message.photo:
+        photo_id = message.photo[-1].file_id
+        caption = message.caption if message.caption else ""
+        
+        broadcast_states[admin_id]['photo'] = photo_id
+        broadcast_states[admin_id]['message'] = caption
+    else:
+        broadcast_states[admin_id]['message'] = message.text
+        broadcast_states[admin_id]['photo'] = None
+    
+    # Ask for confirmation
+    keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="✅ Send Broadcast", callback_data="broadcast_confirm"),
+                InlineKeyboardButton(text="❌ Cancel", callback_data="broadcast_cancel")
+            ]
+        ]
+    )
+    
+    preview_text = f"{Arrow} Broadcast Preview:\n\n{broadcast_states[admin_id]['message']}"
+    
+    if broadcast_states[admin_id]['photo']:
+        await bot.send_photo(
+            chat_id=message.chat.id,
+            photo=broadcast_states[admin_id]['photo'],
+            caption=preview_text,
+            reply_markup=keyboard
+        )
+    else:
+        await message.answer(preview_text, reply_markup=keyboard)
+
+@dp.callback_query(lambda c: c.data == "broadcast_confirm")
+async def broadcast_confirm(callback: CallbackQuery):
+    if not is_admin(callback.from_user.id):
+        await callback.answer("❌ Admin only command", show_alert=True)
+        return
+    
+    admin_id = callback.from_user.id
+    state = broadcast_states.get(admin_id)
+    
+    if not state:
+        await callback.answer("Session expired", show_alert=True)
+        return
+    
+    await callback.message.edit_text("📤 Sending broadcast messages... Please wait.")
+    
+    # Get all users
+    users = get_all_users()
+    successful = 0
+    failed = 0
+    
+    for user_id in users:
+        try:
+            if state['photo']:
+                await bot.send_photo(
+                    chat_id=user_id,
+                    photo=state['photo'],
+                    caption=state['message']
+                )
+            else:
+                await bot.send_message(
+                    chat_id=user_id,
+                    text=state['message']
+                )
+            successful += 1
+            await asyncio.sleep(0.05)  # Small delay to avoid rate limiting
+        except Exception as e:
+            failed += 1
+            print(f"Failed to send to {user_id}: {e}")
+    
+    # Send result to admin
+    result_text = (
+        f"{SURE} Broadcast Completed!\n\n"
+        f"✅ Successful: {successful}\n"
+        f"❌ Failed: {failed}"
+    )
+    
+    await callback.message.edit_text(result_text)
+    
+    # Also send to admin group
+    await bot.send_message(
+        ADMIN_GROUP_ID,
+        f"📢 Broadcast Report\n\n"
+        f"Admin: {callback.from_user.full_name}\n"
+        f"✅ Successful: {successful}\n"
+        f"❌ Failed: {failed}"
+    )
+    
+    del broadcast_states[admin_id]
+    await callback.answer()
+
+@dp.callback_query(lambda c: c.data == "broadcast_cancel")
+async def broadcast_cancel(callback: CallbackQuery):
+    admin_id = callback.from_user.id
+    
+    await callback.message.edit_text("❌ Broadcast cancelled.")
+    
+    if admin_id in broadcast_states:
+        del broadcast_states[admin_id]
+    
+    await callback.answer()
 
 # ================= /addbalance COMMAND =================
 @dp.message(Command("addbalance"))
@@ -587,19 +717,82 @@ async def robux_confirm(callback: CallbackQuery):
         f"ကျေးဇူးပြု၍ ခဏစောင့်ပါ။ သင့် Roblox အကောင့်သို့ Robux ပို့ပေးပါမည်။"
     )
     
-    # Notify admin group
-    await bot.send_message(
-        ADMIN_GROUP_ID,
-        f"🛒 New Robux Purchase\n\n"
-        f"User: {callback.from_user.full_name}\n"
-        f"ID: {user_id}\n"
-        f"Roblox Username: {state['username']}\n"
-        f"Robux Amount: {state['robux_amount']}\n"
-        f"Total Price: {state['total_price']} MMK"
+    # Create admin notification keyboard with 2 buttons in a row
+    admin_keyboard = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text="✅ Order Complete", callback_data=f"robux_complete_{user_id}"),
+                InlineKeyboardButton(text="❌ Order Failed", callback_data=f"robux_failed_{user_id}")
+            ]
+        ]
     )
     
-    del robux_states[user_id]
+    # Send to admin group
+    admin_message = await bot.send_message(
+        ADMIN_GROUP_ID,
+        f"🛒 NEW ROBUX ORDER\n\n"
+        f"👤 User: {callback.from_user.full_name}\n"
+        f"🆔 ID: {user_id}\n"
+        f"📝 Username: @{callback.from_user.username or 'None'}\n"
+        f"🎮 Roblox Username: {state['username']}\n"
+        f"💰 Robux Amount: {state['robux_amount']}\n"
+        f"💵 Total Price: {state['total_price']} MMK\n"
+        f"⏰ Time: {callback.message.date}\n\n"
+        f"{Arrow} Please process this order and update status:",
+        reply_markup=admin_keyboard
+    )
+    
+    # Store admin message ID for reference
+    state['admin_message_id'] = admin_message.message_id
+    
     await callback.answer("✅ Purchase successful!")
+
+# ================= ROBUX ADMIN ORDER STATUS HANDLERS =================
+@dp.callback_query(lambda c: c.data.startswith("robux_complete_"))
+async def robux_order_complete(callback: CallbackQuery):
+    if not is_admin(callback.from_user.id):
+        await callback.answer("❌ Admin only command", show_alert=True)
+        return
+    
+    user_id = int(callback.data.replace("robux_complete_", ""))
+    
+    # Update admin message
+    await callback.message.edit_text(
+        callback.message.text + f"\n\n✅ Order Completed by {callback.from_user.full_name}"
+    )
+    
+    # Notify user
+    await bot.send_message(
+        user_id,
+        f"{TRUE} သင့် Robux မှာယူမှု ပြီးဆုံးပါပြီ။\n"
+        f"ကျေးဇူးတင်ပါသည် {LOVE_1}"
+    )
+    
+    await callback.answer("✅ Order marked as complete")
+
+@dp.callback_query(lambda c: c.data.startswith("robux_failed_"))
+async def robux_order_failed(callback: CallbackQuery):
+    if not is_admin(callback.from_user.id):
+        await callback.answer("❌ Admin only command", show_alert=True)
+        return
+    
+    user_id = int(callback.data.replace("robux_failed_", ""))
+    
+    # Update admin message
+    await callback.message.edit_text(
+        callback.message.text + f"\n\n❌ Order Failed by {callback.from_user.full_name}"
+    )
+    
+    # Refund user
+    # Note: You need to get the amount from somewhere - you might want to store order details
+    # This is a placeholder - you'll need to implement refund logic
+    await bot.send_message(
+        user_id,
+        f"{NO} သင့် Robux မှာယူမှု မအောင်မြင်ပါ။\n"
+        f"ငွေပြန်အမ်းပေးပါမည်။ ကျေးဇူးပြု၍ Admin ကိုဆက်သွယ်ပါ။"
+    )
+    
+    await callback.answer("❌ Order marked as failed")
 
 @dp.callback_query(lambda c: c.data == "robux_cancel")
 async def robux_cancel(callback: CallbackQuery):
