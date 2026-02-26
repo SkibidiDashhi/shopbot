@@ -1,5 +1,5 @@
 import asyncio
-from aiogram import Bot, Dispatcher, types, F
+from aiogram import Bot, Dispatcher, types
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from aiogram.filters import Command
 from aiogram.enums import ParseMode
@@ -9,7 +9,7 @@ from config import (
     B_1, LOGO, Warning, NO, FLASH, SURE, LOVE,
     PLUS, TRUE, ROBUX, ROBLOX, BLOX_FRUIT, LOVE_1,
     Wallet, Kpay, Wave, Slip, No_1, King, Rq, ACCOUNT_PRICE, PRODUCTS,
-    SHOP_PHOTO_URL, PRODUCT_PHOTOS, Ar, Love_2, Ok, Arrow, Shield, onehundred, Money
+    SHOP_PHOTO_URL, PRODUCT_PHOTOS
 )
 import database
 
@@ -23,6 +23,7 @@ dp = Dispatcher()
 topup_states = {}
 ticket_states = {}
 purchase_states = {}
+robux_states = {}  # user_id -> {'step': 1|2, 'username': str, 'amount': int}
 
 # ================= ACCOUNT FUNCTION =================
 def get_account(filename):
@@ -124,7 +125,7 @@ async def ticket_cmd(message: types.Message):
     ticket_states[message.from_user.id] = {'step': 1}
     await message.answer(
         f"{Rq} ကျေးဇူးပြု၍ သင်တွေ့ကြုံရသော Error သို့မဟုတ် အဆင်မပြေမှုကို ရှင်းလင်းစွာရေးသားပို့ပေးပါ။\n\n"
-        f"ဥပမာ - ကျွန်တော် ငွေဖြည့်လိုက်ပေမယ့် လက်ကျန်ငွေမတိုးလာပါ။"
+        f"ဥပမာ - ကျွန်တော် ငွေဖြည့်လိုက်ပေမယ့် လက်ကျန်မတိုးလာပါ။"
     )
 
 @dp.message(lambda m: m.from_user.id in ticket_states and ticket_states[m.from_user.id]['step'] == 1)
@@ -207,36 +208,31 @@ async def send_ticket_to_admin(message: types.Message, user_id: int, ticket_text
                 ADMIN_GROUP_ID,
                 caption
             )
-        print(f"✅ Ticket sent from user {user_id} to admin group")
     except Exception as e:
         print(f"❌ Error sending ticket to admin group: {e}")
         await message.answer("❌ Admin ထံပို့ရာတွင် အဆင်မပြေမှုရှိပါသည်။ ခဏနေမှထပ်ကြိုးစားပါ။")
 
-# ================= ADMIN REPLY HANDLER - FIXED VERSION =================
+# ================= ADMIN REPLY HANDLER =================
 @dp.message(lambda m: m.text and m.text.startswith('/reply_'))
 async def admin_reply(message: types.Message):
-    # Check if user is admin
     if not is_admin(message.from_user.id):
         await message.answer(f"{NO} ဒီ command ကို Admin များသုံးလို့ရပါတယ်။")
         return
     
     try:
-        # Parse command: /reply_123456789 Hello message here
         parts = message.text.split(' ', 1)
-        command = parts[0]  # /reply_123456789
+        command = parts[0]
         reply_text = parts[1] if len(parts) > 1 else ""
         
-        # Extract user_id from command
         user_id = int(command.replace('/reply_', ''))
         
         if not reply_text:
             await message.answer("ပြန်ကြားလိုသည့် စာသားကိုရေးပေးပါ။\nဥပမာ: /reply_123456789 ကျေးဇူးတင်ပါတယ်။")
             return
         
-        # Send reply to user
         await bot.send_message(
             user_id,
-            f"✅ Admin Team မှ ပြန်ကြားချက်:\n\n{reply_text}"
+            f"👑 Admin Team မှ ပြန်ကြားချက်:\n\n{reply_text}"
         )
         
         await message.answer(f"✅ User {user_id} ကို ပြန်ကြားပြီးပါပြီ။")
@@ -402,7 +398,7 @@ async def reject_topup(callback: CallbackQuery):
         print(f"Error in reject: {e}")
         await callback.answer("❌ Error processing rejection", show_alert=True)
 
-# ================= /shop COMMAND WITH PHOTO =================
+# ================= /shop COMMAND =================
 @dp.message(Command("shop"))
 async def shop_cmd(message: types.Message):
     try:
@@ -414,11 +410,15 @@ async def shop_cmd(message: types.Message):
             inline_keyboard=[
                 [
                     InlineKeyboardButton(text="🎮 Blox Fruits Random", callback_data="view_blox"),
-                    InlineKeyboardButton(text="👤 Avatar Random", callback_data="view_avatar")
                 ],
                 [
-                    InlineKeyboardButton(text="💰 Robux Random", callback_data="view_robux"),
-                    InlineKeyboardButton(text="🌐 Boost Website", callback_data="view_boost")
+                    InlineKeyboardButton(text="👤 Avatar Random", callback_data="view_avatar"),
+                ],
+                [
+                    InlineKeyboardButton(text="💰 Buy Robux", callback_data="view_robux"),
+                ],
+                [
+                    InlineKeyboardButton(text="🌐 Zuki Services", url="https://www.zukiservices.com")
                 ]
             ]
         )
@@ -443,20 +443,23 @@ async def view_product(callback: CallbackQuery):
         product_map = {
             "blox": "Blox Fruits Random",
             "avatar": "Avatar Random",
-            "robux": "Robux Random",
-            "boost": "Boost Website"
+            "robux": "Buy Robux"
         }
         
         product_name = product_map.get(product_key)
         if not product_name:
             await callback.answer("Product not found")
             return
-            
-        if product_name == "Boost Website":
-            # Get the URL from PRODUCTS
-            boost_url = PRODUCTS.get("Boost Website", {}).get("url", "www.zukiservices.com")
+        
+        # Special handling for Robux
+        if product_key == "robux":
+            await callback.message.delete()
+            robux_states[callback.from_user.id] = {'step': 1}
+            await bot.send_message(
+                callback.message.chat.id,
+                f"{ROBLOX} သင့်ရဲ့ Roblox Username ပို့ပေးပါ။"
+            )
             await callback.answer()
-            # Open the URL
             return
             
         product = PRODUCTS.get(product_name)
@@ -469,8 +472,8 @@ async def view_product(callback: CallbackQuery):
         keyboard = InlineKeyboardMarkup(
             inline_keyboard=[
                 [
-                    InlineKeyboardButton(text="✅ ၀ယ်ယူမည်", callback_data=f"confirm_{product_key}"),
-                    InlineKeyboardButton(text="❌ မ၀ယ်ယူတော့ပါ", callback_data="back_to_shop")
+                    InlineKeyboardButton(text="✅ Yes, Buy Now", callback_data=f"confirm_{product_key}"),
+                    InlineKeyboardButton(text="❌ No, Go Back", callback_data="back_to_shop")
                 ]
             ]
         )
@@ -495,6 +498,124 @@ async def view_product(callback: CallbackQuery):
         print(f"Error in view_product: {e}")
         await callback.answer("❌ Error loading product details")
 
+# ================= ROBUX PURCHASE HANDLERS =================
+@dp.message(lambda m: m.from_user.id in robux_states and robux_states[m.from_user.id]['step'] == 1)
+async def handle_robux_username(message: types.Message):
+    user_id = message.from_user.id
+    username = message.text.strip()
+    
+    robux_states[user_id]['username'] = username
+    robux_states[user_id]['step'] = 2
+    
+    await message.answer(
+        f"{ROBUX} သင်ဝယ်ယူချင်သော Robux Amount ကိုထည့်ပေးပါ။\n"
+        f"(1 Robux = 25 MMK)"
+    )
+
+@dp.message(lambda m: m.from_user.id in robux_states and robux_states[m.from_user.id]['step'] == 2)
+async def handle_robux_amount(message: types.Message):
+    user_id = message.from_user.id
+    state = robux_states[user_id]
+    
+    try:
+        robux_amount = int(message.text.strip())
+        if robux_amount <= 0:
+            await message.answer(f"{NO} ကျေးဇူးပြု၍ မှန်ကန်သော ဂဏန်းထည့်ပါ။")
+            return
+            
+        total_price = robux_amount * 25
+        state['robux_amount'] = robux_amount
+        state['total_price'] = total_price
+        
+        keyboard = InlineKeyboardMarkup(
+            inline_keyboard=[
+                [
+                    InlineKeyboardButton(text="✅ Buy for Sure", callback_data="robux_confirm"),
+                    InlineKeyboardButton(text="❌ Not going to buy", callback_data="robux_cancel")
+                ]
+            ]
+        )
+        
+        await message.answer(
+            f"{ROBUX} သင်ဝယ်ယူမည့် Robux အချက်အလက်များ\n\n"
+            f"Roblox Username: {state['username']}\n"
+            f"Robux Amount: {robux_amount}\n"
+            f"စုစုပေါင်းငွေ: {total_price} MMK\n\n"
+            f"သေချာဝယ်ယူလိုပါသလား?",
+            reply_markup=keyboard
+        )
+        
+    except ValueError:
+        await message.answer(f"{NO} ကျေးဇူးပြု၍ မှန်ကန်သော ဂဏန်းထည့်ပါ။")
+
+@dp.callback_query(lambda c: c.data == "robux_confirm")
+async def robux_confirm(callback: CallbackQuery):
+    user_id = callback.from_user.id
+    state = robux_states.get(user_id)
+    
+    if not state:
+        await callback.answer("Session expired. Please try again.")
+        return
+    
+    balance = database.get_balance(user_id)
+    
+    if balance < state['total_price']:
+        await callback.message.delete()
+        await bot.send_message(
+            callback.message.chat.id,
+            f"{NO} Balance မလုံလောက်ပါ\n\n"
+            f"Your Balance: {balance} MMK\n"
+            f"Need: {state['total_price']} MMK\n\n"
+            f"ငွေဖြည့်ရန်: /topup"
+        )
+        await callback.answer()
+        del robux_states[user_id]
+        return
+    
+    # Deduct balance
+    database.deduct_balance(user_id, state['total_price'])
+    
+    await callback.message.delete()
+    
+    # Send confirmation to user
+    await bot.send_message(
+        user_id,
+        f"{TRUE} Robux ဝယ်ယူမှုအောင်မြင်ပါသည်\n\n"
+        f"Roblox Username: {state['username']}\n"
+        f"Robux Amount: {state['robux_amount']}\n"
+        f"စုစုပေါင်းငွေ: {state['total_price']} MMK\n\n"
+        f"ကျေးဇူးပြု၍ ခဏစောင့်ပါ။ သင့် Roblox အကောင့်သို့ Robux ပို့ပေးပါမည်။"
+    )
+    
+    # Notify admin group
+    await bot.send_message(
+        ADMIN_GROUP_ID,
+        f"🛒 New Robux Purchase\n\n"
+        f"User: {callback.from_user.full_name}\n"
+        f"ID: {user_id}\n"
+        f"Roblox Username: {state['username']}\n"
+        f"Robux Amount: {state['robux_amount']}\n"
+        f"Total Price: {state['total_price']} MMK"
+    )
+    
+    del robux_states[user_id]
+    await callback.answer("✅ Purchase successful!")
+
+@dp.callback_query(lambda c: c.data == "robux_cancel")
+async def robux_cancel(callback: CallbackQuery):
+    user_id = callback.from_user.id
+    
+    await callback.message.delete()
+    await bot.send_message(
+        callback.message.chat.id,
+        "❌ Robux ဝယ်ယူမှုကို ဖျက်သိမ်းလိုက်ပါသည်။"
+    )
+    
+    if user_id in robux_states:
+        del robux_states[user_id]
+    
+    await callback.answer()
+
 # ================= BACK TO SHOP =================
 @dp.callback_query(lambda c: c.data == "back_to_shop")
 async def back_to_shop(callback: CallbackQuery):
@@ -503,11 +624,15 @@ async def back_to_shop(callback: CallbackQuery):
             inline_keyboard=[
                 [
                     InlineKeyboardButton(text="🎮 Blox Fruits Random", callback_data="view_blox"),
-                    InlineKeyboardButton(text="👤 Avatar Random", callback_data="view_avatar")
                 ],
                 [
-                    InlineKeyboardButton(text="💰 Robux Random", callback_data="view_robux"),
-                    InlineKeyboardButton(text="🌐 Boost Website", callback_data="view_boost")
+                    InlineKeyboardButton(text="👤 Avatar Random", callback_data="view_avatar"),
+                ],
+                [
+                    InlineKeyboardButton(text="💰 Buy Robux", callback_data="view_robux"),
+                ],
+                [
+                    InlineKeyboardButton(text="🌐 Zuki Services", url="https://www.zukiservices.com")
                 ]
             ]
         )
@@ -527,16 +652,15 @@ async def back_to_shop(callback: CallbackQuery):
         print(f"Error in back_to_shop: {e}")
         await callback.answer("❌ Error returning to shop")
 
-# ================= CONFIRM PURCHASE =================
-@dp.callback_query(lambda c: c.data.startswith("confirm_"))
+# ================= CONFIRM PURCHASE (for Blox Fruits & Avatar) =================
+@dp.callback_query(lambda c: c.data.startswith("confirm_") and not c.data == "confirm_robux")
 async def confirm_purchase(callback: CallbackQuery):
     try:
         product_key = callback.data.replace("confirm_", "")
         
         product_map = {
             "blox": "Blox Fruits Random",
-            "avatar": "Avatar Random",
-            "robux": "Robux Random"
+            "avatar": "Avatar Random"
         }
         
         product_name = product_map.get(product_key)
@@ -642,12 +766,6 @@ async def errors_handler(event: types.ErrorEvent):
 # ================= START BOT =================
 async def main():
     print("✅ Bot Started Successfully")
-    print(f"Admin IDs: {ADMIN_IDS}")
-    print(f"Admin Group ID: {ADMIN_GROUP_ID}")
-    print(f"Shop Photo URL: {SHOP_PHOTO_URL}")
-    print(f"Products available: {list(PRODUCTS.keys())}")
-    print(f"Boost Website URL: {PRODUCTS.get('Boost Website', {}).get('url', 'Not set')}")
-    print(f"Waiting for messages...")
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
