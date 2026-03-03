@@ -672,7 +672,8 @@ async def handle_robux_amount(message: types.Message):
             f"Roblox Username: {state['username']}\n"
             f"Robux Amount: {robux_amount}\n"
             f"စုစုပေါင်းငွေ: {total_price} MMK\n\n"
-            f"သေချာဝယ်ယူလိုပါသလား?",
+            f"သေချာဝယ်ယူလိုပါသလား?"
+            f"Stock မရှိသေးပါခင်ဗျာ",
             reply_markup=keyboard
         )
         
