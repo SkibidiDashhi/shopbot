@@ -617,7 +617,8 @@ async def view_product(callback: CallbackQuery):
                 f"📦 {product_name}\n\n"
                 f"💰 Price: {product['price']} MMK\n"
                 f"📝 Description: {product.get('description', 'Random account with good items')}\n\n"
-                f"သေချာဝယ်ယူလိုပါသလား?"
+                f"သေချာဝယ်ယူလိုပါသလား?\n"
+                f"Stock မရှိသေးပါခင်ဗျာ"
             ),
             reply_markup=keyboard
         )
